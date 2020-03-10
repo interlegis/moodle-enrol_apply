@@ -89,6 +89,45 @@ class enrol_apply_plugin extends enrol_plugin {
         return new moodle_url('/enrol/apply/edit.php', array('courseid' => $courseid));
     }
 
+    // TODO mover para outro local, usado também em certificado
+    function obtemCampoCustomizadoCurso($idCurso, $nomeCampo) {
+        global $DB;
+
+        $sql = "
+            SELECT d.value, f.configdata::json->>'options' as options
+            FROM mdl_course c
+            JOIN mdl_context ctx
+                ON c.id = ?
+                    AND ctx.contextlevel = 50
+                    AND ctx.instanceid = c.id
+            JOIN mdl_customfield_field f
+                ON f.shortname = ?
+            JOIN mdl_customfield_data d
+                ON d.fieldid = f.id
+                    AND d.contextid = ctx.id
+            ";
+        
+        $valueArray = $DB->get_record_sql($sql, [$idCurso, $nomeCampo]);
+
+        if($valueArray) {
+            $value = $valueArray->value;
+            $options = $valueArray->options;
+
+            if($options == null) {
+                return $value;
+            } else {
+                $optionsArray = preg_split("/\s*\n\s*/", trim($options));
+                return $optionsArray[$value-1];
+            }
+        } else {
+            return '';
+        }
+    }
+
+    public function insere_assinatura_sigad($codProtocolo, $codUsuario) {
+        // retorna true se inseriu ou se já tinha, ou falso em caso de erro ou timeout
+    } 
+
     public function enrol_page_hook(stdClass $instance) {
         global $CFG, $OUTPUT, $SESSION, $USER, $DB;
 
@@ -103,7 +142,19 @@ class enrol_apply_plugin extends enrol_plugin {
         }
 
         if ($DB->record_exists('user_enrolments', array('userid' => $USER->id, 'enrolid' => $instance->id))) {
-            return $OUTPUT->notification(get_string('notification', 'enrol_apply'), 'notifysuccess');
+            // TODO: incluir aqui chamada para WS que atribui assinatura a documento no SIGAD
+            // analisar resultado: se timeout ou erro, assinatura deve ser inserida manualmente
+            // DO contrário já mostra link para usuário assinar.
+
+            $textoAssinatura = '';
+            if(insere_assinatura_sigad()) {
+                $textoAssinatura = 'Inseriu';
+            } else {
+                $textoAssinatura = 'Erro';
+            }
+
+            $textoassinatura = '<a target=_moodleSigad href=\'https://intra.senado.leg.br/sigad/novo/protocolo/assinador.asp?area=documento&cod_protocolo=2648004&cod_cabecalho=1\'>Assinar</a>';
+            return $textoassinatura . ' '. $OUTPUT->notification(get_string('notification', 'enrol_apply'), 'notifysuccess');
         }
 
         if ($instance->customint3 > 0) {
@@ -114,6 +165,9 @@ class enrol_apply_plugin extends enrol_plugin {
                 return '<div class="alert alert-error">'.get_string('maxenrolledreached_left', 'enrol_apply')." (".$count.") ".get_string('maxenrolledreached_right', 'enrol_apply').'</div>';
             }
         }
+
+
+
 
         require_once("$CFG->dirroot/enrol/apply/apply_form.php");
 
@@ -145,8 +199,11 @@ class enrol_apply_plugin extends enrol_plugin {
         }
 
         $output = $form->render();
+        profile_load_custom_fields($USER); 
 
-        return $OUTPUT->box($output);
+        $campo = obtemCampoCustomizadoCurso($instance->courseid, 'sf_restringir_matricula');
+        
+        return $OUTPUT->box('<b>Teste</b> ' . $campo . $USER->profile['sf_cargo_chefia']) . $OUTPUT->box($output);
     }
 
     public function get_action_icons(stdClass $instance) {

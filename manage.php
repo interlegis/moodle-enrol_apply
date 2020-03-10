@@ -36,6 +36,8 @@ require_login();
 $manageurlparams = array();
 if ($id == null) {
     $context = context_system::instance();
+    // TODO verificar se coordenador tem esse papel
+    // TODO criar task para verificar assinaturas e confirmar automaticamente
     require_capability('enrol/apply:manageapplications', $context);
     $pageheading = get_string('confirmusers', 'enrol_apply');
     $instance = null;

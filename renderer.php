@@ -80,16 +80,17 @@ class enrol_apply_renderer extends plugin_renderer_base {
     public function manage_table($table, $instance) {
         $columns = array(
             'checkboxcolumn',
-            'course',
+            'sf_cargo_chefia',
             'fullname', // Magic happens here: The column heading will automatically be set.
-            'email',
+            //'email',
             'applydate',
             'applycomment');
         $headers = array(
             html_writer::checkbox('toggleall', 'toggleall', false, '', array('id' => 'toggleall')),
-            get_string('course'),
+            'sf_cargo_chefia',
+            //get_string('course'),
             'fullname', // Magic happens here: The column heading will automatically be set due to column name 'fullname'.
-            get_string('email'),
+            //get_string('email'),
             get_string('applydate', 'enrol_apply'),
             get_string('applycomment', 'enrol_apply'),
         );

@@ -47,10 +47,12 @@ class enrol_apply_manage_table extends table_sql {
 
         $this->set_sql(
             'ue.id AS userenrolmentid, ue.userid, ue.status AS enrolstatus, ue.timecreated AS applydate,
-            ai.comment AS applycomment, u.*, c.fullname as course',
+            ai.comment AS applycomment, u.*, c.fullname as course, fcd.data as sf_cargo_chefia ',
             "{user_enrolments} AS ue
             LEFT JOIN {enrol_apply_applicationinfo} ai ON ai.userenrolmentid = ue.id
             JOIN {user} u ON u.id = ue.userid
+            LEFT JOIN {user_info_field} fc ON fc.shortname = 'sf_cargo_chefia'
+            LEFT JOIN {user_info_data} fcd ON fc.id = fcd.fieldid AND u.id = fcd.userid 
             JOIN {enrol} e ON e.id = ue.enrolid
             JOIN {course} c ON c.id = e.courseid",
             $sqlwhere,
