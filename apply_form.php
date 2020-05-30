@@ -24,6 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+//require_once('./lib.php');
+
 require_once($CFG->libdir.'/formslib.php');
 require_once($CFG->dirroot.'/user/editlib.php');
 require_once($CFG->dirroot.'/user/profile/lib.php');
@@ -39,6 +41,52 @@ class enrol_apply_apply_form extends moodleform {
     protected function get_form_identifier() {
         $formid = $this->_customdata->id.'_'.get_class($this);
         return $formid;
+    }
+
+    public function montaStringCurso($mform) {
+        // // INICIO MGBF
+        // $strInfoCurso = 'Um texto qualquer';
+                
+        // $campo = obtemCampoCustomizadoCurso($instance->courseid, 'sf_restringir_matricula');
+        // $strInfoCurso .= $campo . $USER->profile['sf_cargo_chefia'];
+
+        // profile_load_custom_fields($USER);
+        // $mform->addElement('html', '<p>' . $strInfoCurso . '</p>');
+
+        // global $PAGE;
+        // $PAGE->requires->css('/enrol/apply/css/js-year-calendar.min.css', true);
+        // $PAGE->requires->js_call_amd('enrol_apply/teste', 'init');
+        // $mform->addElement('html', "<div style='overflow-x:visible !important' id='calendar'></div>");
+        // // FIM MGBF
+
+        $resultado = '';
+
+        // Verifica se o curso é restrito a setores do Senado.
+        if(true) { // restrito
+            $mform->addElement('html', '<div class="alert alert-danger">Curso restrito</div>');
+        } else {
+            $mform->addElement('html', '<div class="alert alert-info">'.$count.' '.get_string('maxenrolled_tip_1', 'enrol_apply').' '.$instance->customint3.' '.get_string('maxenrolled_tip_2', 'enrol_apply').'</div>');
+        }
+
+        // Verifica se o curso é determinadas funções do Senado.
+        if(true) { // restrito
+            $mform->addElement('html', '<div class="alert alert-danger">Curso restrito</div>');
+        } else {
+            $mform->addElement('html', '<div class="alert alert-info">'.$count.' '.get_string('maxenrolled_tip_1', 'enrol_apply').' '.$instance->customint3.' '.get_string('maxenrolled_tip_2', 'enrol_apply').'</div>');
+        }
+
+        // Verifica se o curso é determinados tipos de vínculo do Senado.
+        if(true) { // restrito
+            $mform->addElement('html', '<div class="alert alert-danger">Curso restrito</div>');
+        } else {
+            $mform->addElement('html', '<div class="alert alert-info">'.$count.' '.get_string('maxenrolled_tip_1', 'enrol_apply').' '.$instance->customint3.' '.get_string('maxenrolled_tip_2', 'enrol_apply').'</div>');
+        }
+
+        // Informa valor do custo por aluno
+
+        // Informa que servidor terá que assinar termo de responsabilidade
+
+        return true;
     }
 
     public function definition() {
@@ -58,6 +106,9 @@ class enrol_apply_apply_form extends moodleform {
                 $mform->addElement('html', '<div class="alert alert-info">'.$count.' '.get_string('maxenrolled_tip_1', 'enrol_apply').' '.$instance->customint3.' '.get_string('maxenrolled_tip_2', 'enrol_apply').'</div>');
             }
         }
+
+        // Monta mensagens de acordo com atributos do curso e/ou aluno
+        $this->montaStringCurso($mform);
 
         $mform->addElement('html', '<p>'.$instance->customtext1.'</p>');
         $comment_title = get_string('comment', 'enrol_apply');
@@ -91,4 +142,5 @@ class enrol_apply_apply_form extends moodleform {
         $mform->setDefault('instance', $instance->id);
 
     }
+
 }

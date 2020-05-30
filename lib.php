@@ -25,6 +25,7 @@
 /** The user is put onto a waiting list and therefore the enrolment not active (used in user_enrolments->status) */
 define('ENROL_APPLY_USER_WAIT', 2);
 
+
 class enrol_apply_plugin extends enrol_plugin {
 
     /**
@@ -128,6 +129,8 @@ class enrol_apply_plugin extends enrol_plugin {
         // retorna true se inseriu ou se já tinha, ou falso em caso de erro ou timeout
     } 
 
+    // Chamado quando usuário solicita inscrição em um curso
+    // e também depois da confirmação da inscrição
     public function enrol_page_hook(stdClass $instance) {
         global $CFG, $OUTPUT, $SESSION, $USER, $DB;
 
@@ -136,12 +139,33 @@ class enrol_apply_plugin extends enrol_plugin {
             return null;
         }
 
+        // Assegura que método de inscrição está ativo 
         $allowapply = $this->allow_apply($instance);
         if ($allowapply !== true) {
             return '<div class="alert alert-error">' . $allowapply . '</div>';
         }
 
+        // Testa se foi chamado após a inscrição
         if ($DB->record_exists('user_enrolments', array('userid' => $USER->id, 'enrolid' => $instance->id))) {
+
+            // Já está inserido na tabela
+            // Devo pegar quantitativo do curso e posição real, dentre os já aprovados
+            // Se estiver entre as vagas, já marca como matriculado e envia e-mail
+            // Senão, informa que está na fila e envia e-mail
+            
+            /*
+            PROC insere assinatura sigad
+            
+            Você foi pre-matriculado no curso XXXX.
+            A partir de agora, você tem 48 horas para assinar o termo de responsabilidade
+            no SIGAD, de modo a assegurar sua vaga.
+            
+            <link para assinatura>
+
+            Caso não faça a assinatura dentro desse período, perderá direito a vaga, que 
+            poderá ser ocupada por outro interessado.
+            */
+
             // TODO: incluir aqui chamada para WS que atribui assinatura a documento no SIGAD
             // analisar resultado: se timeout ou erro, assinatura deve ser inserida manualmente
             // DO contrário já mostra link para usuário assinar.
@@ -157,6 +181,8 @@ class enrol_apply_plugin extends enrol_plugin {
             return $textoassinatura . ' '. $OUTPUT->notification(get_string('notification', 'enrol_apply'), 'notifysuccess');
         }
 
+        // Se deseja se inscrever, verifica se já não atingiu limite de inscritos
+        // FIXME evidenciar que é pré-inscrição, ver como tratar esse limite!
         if ($instance->customint3 > 0) {
             // Max enrol limit specified.
             $count = $DB->count_records('user_enrolments', array('enrolid' => $instance->id));
@@ -166,13 +192,15 @@ class enrol_apply_plugin extends enrol_plugin {
             }
         }
 
-
-
-
+        // Exibe formulário para matrícula
         require_once("$CFG->dirroot/enrol/apply/apply_form.php");
 
         $form = new enrol_apply_apply_form(null, $instance);
 
+        // Se formulário foi submetido, efetiva a matrícula e
+        // redireciona para página do curso 
+        // FIXME não redirecionar ainda
+        // FIXME definir datas de enrol
         if ($data = $form->get_data()) {
             // Only process when form submission is for this instance (multi instance support).
             if ($data->instance == $instance->id) {
@@ -192,20 +220,25 @@ class enrol_apply_plugin extends enrol_plugin {
                 $applicationinfo->comment = $data->applydescription;
                 $DB->insert_record('enrol_apply_applicationinfo', $applicationinfo, false);
 
+                // FIXME verificar se essa notificação é apropriada
                 $this->send_application_notification($instance, $USER->id, $data);
 
+                // FIXME verificar redirecionamento
                 redirect("$CFG->wwwroot/course/view.php?id=$instance->courseid");
             }
         }
 
+        // Exibe informações sobre público alvo do curso
+        // e botões para matrícula
+        // Em caso de mais de uma instância, todas aparecem aqui
+        // FIXME definir formato
         $output = $form->render();
-        profile_load_custom_fields($USER); 
 
-        $campo = obtemCampoCustomizadoCurso($instance->courseid, 'sf_restringir_matricula');
-        
-        return $OUTPUT->box('<b>Teste</b> ' . $campo . $USER->profile['sf_cargo_chefia']) . $OUTPUT->box($output);
+        return $OUTPUT->box($OUTPUT->box($output));
     }
 
+    // Monta os botões de ação que serão exibidos para este método de inscrição
+    // na página de métodos de inscrição do curso (/enrol/instances.php?id=IDCURSO)
     public function get_action_icons(stdClass $instance) {
         global $OUTPUT;
 
@@ -215,7 +248,7 @@ class enrol_apply_plugin extends enrol_plugin {
         $context = context_course::instance($instance->courseid);
 
         $icons = array();
-
+        
         if (has_capability('enrol/apply:config', $context)) {
             $editlink = new moodle_url("/enrol/apply/edit.php", array('courseid' => $instance->courseid, 'id' => $instance->id));
             $icons[] = $OUTPUT->action_icon($editlink, new pix_icon(
@@ -286,11 +319,12 @@ class enrol_apply_plugin extends enrol_plugin {
 
     public function get_user_enrolment_actions(course_enrolment_manager $manager, $ue) {
         $actions = array();
+        //return $actions;
         $context = $manager->get_context();
         $instance = $ue->enrolmentinstance;
         $params = $manager->get_moodlepage()->url->params();
         $params['ue'] = $ue->id;
-        if ($this->allow_unenrol_user($instance, $ue) && has_capability("enrol/apply:unenrol", $context)) {
+        if ( ($this->allow_unenrol_user($instance, $ue)) && has_capability("enrol/apply:unenrol", $context)) {
             $url = new moodle_url('/enrol/unenroluser.php', $params);
             $actions[] = new user_enrolment_action(
                 new pix_icon('t/delete', ''),
