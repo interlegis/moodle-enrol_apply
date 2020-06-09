@@ -68,14 +68,14 @@ class enrol_apply_apply_form extends moodleform {
             $mform->addElement('html', '<div class="alert alert-info">'.$count.' '.get_string('maxenrolled_tip_1', 'enrol_apply').' '.$instance->customint3.' '.get_string('maxenrolled_tip_2', 'enrol_apply').'</div>');
         }
 
-        // Verifica se o curso é determinadas funções do Senado.
+        // Verifica se o curso é restrito a determinadas funções do Senado.
         if(true) { // restrito
             $mform->addElement('html', '<div class="alert alert-danger">Curso restrito</div>');
         } else {
             $mform->addElement('html', '<div class="alert alert-info">'.$count.' '.get_string('maxenrolled_tip_1', 'enrol_apply').' '.$instance->customint3.' '.get_string('maxenrolled_tip_2', 'enrol_apply').'</div>');
         }
 
-        // Verifica se o curso é determinados tipos de vínculo do Senado.
+        // Verifica se o curso é restrito a determinados tipos de vínculo do Senado.
         if(true) { // restrito
             $mform->addElement('html', '<div class="alert alert-danger">Curso restrito</div>');
         } else {
@@ -131,7 +131,7 @@ class enrol_apply_apply_form extends moodleform {
 
         $mform->setDefaults((array)$USER);
 
-        $this->add_action_buttons(false, get_string('enrolme', 'enrol_self'));
+        $this->add_action_buttons(false, 'Faça minha pré-matrícula');
 
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);

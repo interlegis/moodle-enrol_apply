@@ -120,13 +120,14 @@ class enrol_apply_plugin extends enrol_plugin {
                 $optionsArray = preg_split("/\s*\n\s*/", trim($options));
                 return $optionsArray[$value-1];
             }
-        } else {
+        } else { 
             return '';
         }
     }
-
-    public function insere_assinatura_sigad($codProtocolo, $codUsuario) {
+ 
+    public function insere_assinatura_sigad(/*$codProtocolo, $codUsuario*/) {
         // retorna true se inseriu ou se já tinha, ou falso em caso de erro ou timeout
+        return true;
     } 
 
     // Chamado quando usuário solicita inscrição em um curso
@@ -171,7 +172,7 @@ class enrol_apply_plugin extends enrol_plugin {
             // DO contrário já mostra link para usuário assinar.
 
             $textoAssinatura = '';
-            if(insere_assinatura_sigad()) {
+            if(true) {
                 $textoAssinatura = 'Inseriu';
             } else {
                 $textoAssinatura = 'Erro';
